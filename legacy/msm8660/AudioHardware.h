@@ -165,13 +165,13 @@ public:
     // create I/O streams
     virtual AudioStreamOut* openOutputStream(
                                 uint32_t devices,
-                                int *format=0,
+                                uint32_t *format=0,
                                 uint32_t *channels=0,
                                 uint32_t *sampleRate=0,
                                 status_t *status=0);
     virtual AudioStreamIn* openInputStream(
                                 uint32_t devices,
-                                int *format,
+                                uint32_t *format,
                                 uint32_t *channels,
                                 uint32_t *sampleRate,
                                 status_t *status,
@@ -229,7 +229,7 @@ private:
         virtual             ~AudioStreamOutMSM8x60();
                 status_t    set(AudioHardware* mHardware,
                                 uint32_t devices,
-                                int *pFormat,
+                                uint32_t *pFormat,
                                 uint32_t *pChannels,
                                 uint32_t *pRate);
         virtual uint32_t sampleRate() const {
@@ -255,7 +255,7 @@ private:
             }
         }
         virtual uint32_t    channels() const { return AUDIO_CHANNEL_OUT_STEREO; }
-        virtual int         format() const { return AUDIO_FORMAT_PCM_16_BIT; }
+        virtual uint32_t    format() const { return AUDIO_FORMAT_PCM_16_BIT; }
 
         virtual uint32_t    latency() const { return (1000*AUDIO_HW_NUM_OUT_BUF*(bufferSize()/frameSize()))/sampleRate()+AUDIO_HW_OUT_LATENCY_MS; }
         virtual status_t    setVolume(float left, float right) { return INVALID_OPERATION; }
@@ -283,14 +283,14 @@ private:
         virtual             ~AudioStreamOutDirect();
                 status_t    set(AudioHardware* mHardware,
                                 uint32_t devices,
-                                int *pFormat,
+                                uint32_t *pFormat,
                                 uint32_t *pChannels,
                                 uint32_t *pRate);
         virtual uint32_t    sampleRate() const {ALOGD(" AudioStreamOutDirect: SampleRate %d\n",mSampleRate); return mSampleRate; }
         // must be 32-bit aligned - driver only seems to like 4800
         virtual size_t      bufferSize() const { ALOGD(" AudioStreamOutDirect: bufferSize %d\n",mBufferSize);return mBufferSize; }
         virtual uint32_t    channels() const {ALOGD(" AudioStreamOutDirect: channels %d\n",mChannels); return mChannels; }
-        virtual int         format() const {ALOGD(" AudioStreamOutDirect: format %d\n",mFormat);return mFormat; }
+        virtual uint32_t    format() const {ALOGD(" AudioStreamOutDirect: format %d\n",mFormat);return mFormat; }
         virtual uint32_t    latency() const { return (1000*AUDIO_HW_NUM_OUT_BUF*(bufferSize()/frameSize()))/sampleRate()+AUDIO_HW_OUT_LATENCY_MS; }
         virtual status_t    setVolume(float left, float right) { return INVALID_OPERATION; }
         virtual ssize_t     write(const void* buffer, size_t bytes);
@@ -312,7 +312,7 @@ private:
                 uint32_t    mChannels;
                 uint32_t    mSampleRate;
                 size_t      mBufferSize;
-                int         mFormat;
+                uint32_t    mFormat;
     };
 #endif
 
@@ -321,7 +321,7 @@ class AudioSessionOutLPA : public AudioStreamOut
 public:
     AudioSessionOutLPA(AudioHardware* mHardware,
                         uint32_t   devices,
-                        int        format,
+                        uint32_t   format,
                         uint32_t   channels,
                         uint32_t   samplingRate,
                         int        type,
@@ -343,7 +343,7 @@ public:
         return mChannels;
     }
 
-    virtual int         format() const
+    virtual uint32_t    format() const
     {
         return mFormat;
     }
@@ -385,7 +385,7 @@ private:
     uint32_t            mSampleRate;
     uint32_t            mChannels;
     size_t              mBufferSize;
-    int                 mFormat;
+    uint32_t            mFormat;
     uint32_t            mStreamVol;
 
     bool                mPaused;
@@ -463,7 +463,7 @@ class AudioSessionOutTunnel : public AudioStreamOut
 public:
     AudioSessionOutTunnel(AudioHardware* mHardware,
                         uint32_t   devices,
-                        int        format,
+                        uint32_t   format,
                         uint32_t   channels,
                         uint32_t   samplingRate,
                         int        type,
@@ -485,7 +485,7 @@ public:
         return mChannels;
     }
 
-    virtual int         format() const
+    virtual uint32_t    format() const
     {
         return mFormat;
     }
@@ -525,7 +525,7 @@ private:
     uint32_t            mSampleRate;
     uint32_t            mChannels;
     size_t              mBufferSize;
-    int                 mFormat;
+    uint32_t            mFormat;
     uint32_t            mStreamVol;
 
     bool                mPaused;
@@ -611,13 +611,13 @@ private:
         virtual             ~AudioStreamInMSM8x60();
                 status_t    set(AudioHardware* mHardware,
                                 uint32_t devices,
-                                int *pFormat,
+                                uint32_t *pFormat,
                                 uint32_t *pChannels,
                                 uint32_t *pRate,
                                 AudioSystem::audio_in_acoustics acoustics);
         virtual size_t      bufferSize() const { return mBufferSize; }
         virtual uint32_t    channels() const { return mChannels; }
-        virtual int         format() const { return mFormat; }
+        virtual uint32_t    format() const { return mFormat; }
         virtual uint32_t    sampleRate() const { return mSampleRate; }
         virtual status_t    setGain(float gain) { return INVALID_OPERATION; }
         virtual ssize_t     read(void* buffer, ssize_t bytes);
@@ -636,7 +636,7 @@ private:
                 AudioHardware* mHardware;
                 int         mState;
                 int         mRetryCount;
-                int         mFormat;
+                uint32_t    mFormat;
                 uint32_t    mChannels;
                 uint32_t    mSampleRate;
                 size_t      mBufferSize;
@@ -659,13 +659,13 @@ private:
         virtual             ~AudioStreamInVoip();
                 status_t    set(AudioHardware* mHardware,
                                 uint32_t devices,
-                                int *pFormat,
+                                uint32_t *pFormat,
                                 uint32_t *pChannels,
                                 uint32_t *pRate,
                                 AudioSystem::audio_in_acoustics acoustics);
         virtual size_t      bufferSize() const { return mBufferSize; }
         virtual uint32_t    channels() const {ALOGD(" AudioStreamInVoip: channels %d \n",mChannels); return mChannels; }
-        virtual int         format() const { return AUDIO_HW_IN_FORMAT; }
+        virtual uint32_t    format() const { return AUDIO_HW_IN_FORMAT; }
         virtual uint32_t    sampleRate() const { return mSampleRate; }
         virtual status_t    setGain(float gain) { return INVALID_OPERATION; }
         virtual ssize_t     read(void* buffer, ssize_t bytes);
@@ -684,7 +684,7 @@ private:
                 int         mFd;
                 int         mState;
                 int         mRetryCount;
-                int         mFormat;
+                uint32_t    mFormat;
                 uint32_t    mChannels;
                 uint32_t    mSampleRate;
                 size_t      mBufferSize;
