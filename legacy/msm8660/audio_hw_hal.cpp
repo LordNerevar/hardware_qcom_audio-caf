@@ -564,7 +564,7 @@ static int adev_set_fm_volume(struct audio_hw_device *dev, float volume)
 static int adev_set_mode(struct audio_hw_device *dev, audio_mode_t mode)
 {
     struct qcom_audio_device *qadev = to_ladev(dev);
-    return qadev->hwif->setMode((int)mode);
+    return qadev->hwif->setMode(mode);
 }
 
 static int adev_set_mic_mute(struct audio_hw_device *dev, bool state)
