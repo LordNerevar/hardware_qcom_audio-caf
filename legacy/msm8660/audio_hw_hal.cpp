@@ -156,14 +156,14 @@ static audio_channel_mask_t out_get_channels(const struct audio_stream *stream)
 {
     const struct qcom_stream_out *out =
         reinterpret_cast<const struct qcom_stream_out *>(stream);
-    return (audio_channel_mask_t) out->qcom_out->channels();
+    return out->qcom_out->channels();
 }
 
 static audio_format_t out_get_format(const struct audio_stream *stream)
 {
     const struct qcom_stream_out *out =
         reinterpret_cast<const struct qcom_stream_out *>(stream);
-    return (audio_format_t)out->qcom_out->format();
+    return out->qcom_out->format();
 }
 
 static int out_set_format(struct audio_stream *stream, audio_format_t format)
@@ -359,14 +359,14 @@ static audio_channel_mask_t in_get_channels(const struct audio_stream *stream)
 {
     const struct qcom_stream_in *in =
         reinterpret_cast<const struct qcom_stream_in *>(stream);
-    return (audio_channel_mask_t) in->qcom_in->channels();
+    return in->qcom_in->channels();
 }
 
 static audio_format_t in_get_format(const struct audio_stream *stream)
 {
     const struct qcom_stream_in *in =
         reinterpret_cast<const struct qcom_stream_in *>(stream);
-    return (audio_format_t)in->qcom_in->format();
+    return in->qcom_in->format();
 }
 
 static int in_set_format(struct audio_stream *stream, audio_format_t format)
