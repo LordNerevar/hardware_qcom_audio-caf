@@ -179,7 +179,7 @@ static audio_io_handle_t ap_get_input(struct audio_policy *pol, audio_source_t i
                                       audio_in_acoustics_t acoustics)
 {
     struct qcom_audio_policy *qap = to_qap(pol);
-    return qap->apm->getInput((int) inputSource, sampling_rate, (int) format, channelMask,
+    return qap->apm->getInput((int) inputSource, sampling_rate, format, channelMask,
                               (AudioSystem::audio_in_acoustics)acoustics);
 }
 

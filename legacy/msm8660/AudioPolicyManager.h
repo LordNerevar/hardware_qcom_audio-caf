@@ -45,14 +45,14 @@ public:
                                            audio_devices_t prevDevice,
                                            uint32_t delayMs);
 
-	void setStrategyMute(routing_strategy strategy,
-						 bool on,
-						 audio_io_handle_t output,
-						 int delayMs = 0,
-						 audio_devices_t device = (audio_devices_t)0);
-	void setStreamMute(int stream, bool on, audio_io_handle_t output,
-						int delayMs = 0,
-						audio_devices_t device = (audio_devices_t)0);
+        void setStrategyMute(routing_strategy strategy,
+                             bool on,
+                             audio_io_handle_t output,
+                             int delayMs = 0,
+                             audio_devices_t device = (audio_devices_t)0);
+        void setStreamMute(int stream, bool on, audio_io_handle_t output,
+                           int delayMs = 0,
+                           audio_devices_t device = (audio_devices_t)0);
 
         virtual AudioSystem::device_connection_state getDeviceConnectionState(audio_devices_t device,
                                                                               const char *device_address);
@@ -61,9 +61,9 @@ public:
         virtual audio_io_handle_t getOutput(AudioSystem::stream_type stream,
                                             uint32_t samplingRate,
                                             audio_format_t format,
-					    audio_channel_mask_t channelMask,
+                                            audio_channel_mask_t channelMask,
                                             AudioSystem::output_flags flags,
-                                                     const audio_offload_info_t *offloadInfo = NULL);
+                                            const audio_offload_info_t *offloadInfo = NULL);
         virtual status_t startOutput(audio_io_handle_t output,
                                      AudioSystem::stream_type stream,
                                      int session = 0);
