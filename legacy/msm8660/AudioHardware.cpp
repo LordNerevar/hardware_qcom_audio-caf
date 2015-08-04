@@ -525,12 +525,14 @@ static status_t updateDeviceInfo(int rx_device,int tx_device) {
 
                 ALOGD("case PCM_REC");
                 if(isTxDeviceEnabled == false) {
-                    enableDevice(temp_ptr->dev_id,0);
-                    enableDevice(tx_device,1);
+                    if (temp_ptr->dev_id != tx_device) {
+                        enableDevice(temp_ptr->dev_id,0);
+                        enableDevice(tx_device,1);
+                        isTxDeviceEnabled = true;
 #ifdef QCOM_ACDB_ENABLED
-                    acdb_loader_send_audio_cal(ACDB_ID(tx_device), CAPABILITY(tx_device));
+                        acdb_loader_send_audio_cal(ACDB_ID(tx_device), CAPABILITY(tx_device));
 #endif
-                    isTxDeviceEnabled = true;
+                    }
                 }
                 if(msm_route_stream(PCM_REC,temp_ptr->dec_id,DEV_ID(temp_ptr->dev_id),0)) {
                     ALOGV("msm_route_stream(PCM_PLAY,%d,%d,0) failed",temp_ptr->dec_id,DEV_ID(temp_ptr->dev_id));
@@ -575,24 +577,24 @@ static status_t updateDeviceInfo(int rx_device,int tx_device) {
                     {
                         enableDevice(temp_ptr->dev_id,0);
                     }
-                    isRxDeviceEnabled = true;
                 }
                 if(isTxDeviceEnabled == false) {
                     if (tx_device != temp_ptr->dev_id_tx)
                     {
                         enableDevice(temp_ptr->dev_id_tx,0);
                     }
-                    isTxDeviceEnabled = true;
                 }
 
                 if (rx_device != temp_ptr->dev_id)
                 {
                     enableDevice(rx_device,1);
+                    isRxDeviceEnabled = true;
                 }
 
                 if (tx_device != temp_ptr->dev_id_tx)
                 {
                     enableDevice(tx_device,1);
+                    isTxDeviceEnabled = true;
                 }
 
                 cur_rx = rx_device;
@@ -1149,7 +1151,7 @@ AudioStreamIn* AudioHardware::openInputStream(
 
     mLock.lock();
 #ifdef QCOM_VOIP_ENABLED
-    if((devices == AudioSystem::DEVICE_IN_COMMUNICATION) &&
+    if((devices == AUDIO_DEVICE_IN_COMMUNICATION) &&
         (*sampleRate == AUDIO_HW_VOIP_SAMPLERATE_8K || *sampleRate == AUDIO_HW_VOIP_SAMPLERATE_16K)) {
         ALOGV("Create Audio stream Voip \n");
         AudioStreamInVoip* inVoip = new AudioStreamInVoip();
@@ -1174,12 +1176,11 @@ AudioStreamIn* AudioHardware::openInputStream(
     } else
 #endif /*QCOM_VOIP_ENABLED*/
     {
-       if ( (mMode == AudioSystem::MODE_IN_CALL) &&
+       if ( (mMode == AUDIO_MODE_IN_CALL) &&
             (getInputSampleRate(*sampleRate) > AUDIO_HW_IN_SAMPLERATE) &&
             (*format == AUDIO_HW_IN_FORMAT) )
         {
-              ALOGE("PCM recording, in a voice call, with sample rate more than 8K not supported \
-                   re-configure with 8K and try software re-sampler ");
+              ALOGE("PCM recording, in a voice call, with sample rate more than 8K not supported re-configure with 8K and try software re-sampler");
               *status = -EINVAL;
               *sampleRate = AUDIO_HW_IN_SAMPLERATE;
               mLock.unlock();
@@ -2973,12 +2974,12 @@ uint32_t AudioHardware::getInputSampleRate(uint32_t sampleRate)
 status_t AudioHardware::setupDeviceforVoipCall(bool value)
 {
     ALOGV("setupDeviceforVoipCall value %d",value);
-    if (mMode == AudioSystem::MODE_IN_CALL && value == false) {
+    if (mMode == AUDIO_MODE_IN_CALL && value == false) {
         ALOGE("mode already set for voice call, do not change to normal");
         return NO_ERROR;
     }
  
-    int mode = (value ? AudioSystem::MODE_IN_COMMUNICATION : AudioSystem::MODE_NORMAL);
+    int mode = (value ? AUDIO_MODE_IN_COMMUNICATION : AUDIO_MODE_NORMAL);
     if (setMode(mode) == BAD_VALUE) {
         ALOGV("setMode fails");
         return UNKNOWN_ERROR;
@@ -2989,7 +2990,7 @@ status_t AudioHardware::setupDeviceforVoipCall(bool value)
         return UNKNOWN_ERROR;
     }
 
-    ALOGD("Device setup sucess for VOIP call");
+    ALOGD("Device setup success for VOIP call");
 
     return NO_ERROR;
 }
@@ -3032,7 +3033,7 @@ status_t AudioHardware::AudioStreamInVoip::set(
         return BAD_VALUE;
     }
 
-    if (pChannels == 0 || (*pChannels & (AudioSystem::CHANNEL_IN_MONO)) == 0) {
+    if (pChannels == 0 || (*pChannels & (AUDIO_CHANNEL_IN_MONO)) == 0) {
         *pChannels = AUDIO_HW_IN_CHANNELS;
         ALOGE(" channel count does not match\n");
         return BAD_VALUE;
@@ -3135,7 +3136,6 @@ status_t AudioHardware::AudioStreamInVoip::set(
             ALOGE("Cannot start mvs driver");
             goto Error;
         }
-
     }
     mFormat =  *pFormat;
     mChannels = *pChannels;
@@ -3182,7 +3182,7 @@ AudioHardware::AudioStreamInVoip::~AudioStreamInVoip()
 
 ssize_t AudioHardware::AudioStreamInVoip::read( void* buffer, ssize_t bytes)
 {
-    ALOGV("AudioStreamInVoip::read(%p, %zu)", buffer, bytes);
+    ALOGVV("AudioStreamInVoip::read(%p, %zu)", buffer, bytes);
     if (!mHardware) return -1;
 
     size_t count = bytes;
@@ -3238,7 +3238,7 @@ ssize_t AudioHardware::AudioStreamInVoip::read( void* buffer, ssize_t bytes)
     }else{
         struct msm_audio_mvs_frame *mvsFramePtr = (msm_audio_mvs_frame *)buffer;
         int bytesRead = ::read(mFd, &audio_mvs_frame, sizeof(audio_mvs_frame));
-        ALOGV("Non PCM read_bytes %d frame type %d len %d\n", bytesRead, audio_mvs_frame.frame_type, audio_mvs_frame.len);
+        ALOGVV("Non PCM read_bytes %d frame type %d len %d\n", bytesRead, audio_mvs_frame.frame_type, audio_mvs_frame.len);
         mvsFramePtr->frame_type = audio_mvs_frame.frame_type;
         mvsFramePtr->len = audio_mvs_frame.len;
         memcpy(&mvsFramePtr->voc_pkt, &audio_mvs_frame.voc_pkt, audio_mvs_frame.len);
@@ -3717,8 +3717,8 @@ status_t AudioHardware::AudioStreamOutMSM8x60::getRenderPosition(uint32_t *dspFr
 // ----------------------------------------------------------------------------
 
 AudioHardware::AudioStreamOutDirect::AudioStreamOutDirect() :
-    mHardware(0), mFd(-1), mStartCount(0), mRetryCount(0), mStandby(true), mDevices(0),mChannels(AudioSystem::CHANNEL_OUT_MONO),
-    mSampleRate(AUDIO_HW_VOIP_SAMPLERATE_8K), mBufferSize(AUDIO_HW_VOIP_BUFFERSIZE_8K), mFormat(AudioSystem::PCM_16_BIT)
+    mHardware(0), mFd(-1), mStartCount(0), mRetryCount(0), mStandby(true), mDevices(0),mChannels(AUDIO_CHANNEL_OUT_MONO),
+    mSampleRate(AUDIO_HW_VOIP_SAMPLERATE_8K), mBufferSize(AUDIO_HW_VOIP_BUFFERSIZE_8K), mFormat(AUDIO_FORMAT_PCM_16_BIT)
 {
 }
 
@@ -3788,7 +3788,7 @@ AudioHardware::AudioStreamOutDirect::~AudioStreamOutDirect()
 
 ssize_t AudioHardware::AudioStreamOutDirect::write(const void* buffer, size_t bytes)
 {
-    ALOGE("AudioStreamOutDirect::write(%p, %zu)", buffer, bytes);
+    ALOGVV("AudioStreamOutDirect::write(%p, %zu)", buffer, bytes);
     status_t status = NO_INIT;
     size_t count = bytes;
     const uint8_t* p = static_cast<const uint8_t*>(buffer);
@@ -5687,7 +5687,7 @@ status_t AudioHardware::AudioStreamInMSM8x60::set(
         return BAD_VALUE;
     }
 
-    if (pChannels == 0 || (*pChannels & (AudioSystem::CHANNEL_IN_MONO | AudioSystem::CHANNEL_IN_STEREO)) == 0) {
+    if (pChannels == 0 || (*pChannels & (AUDIO_CHANNEL_IN_MONO | AUDIO_CHANNEL_IN_STEREO)) == 0) {
         *pChannels = AUDIO_HW_IN_CHANNELS;
         ALOGE(" Channel count does not match\n");
         return BAD_VALUE;
@@ -5730,9 +5730,9 @@ status_t AudioHardware::AudioStreamInMSM8x60::set(
             ALOGE("Cannot set config");
             if (ioctl(mFdin, AUDIO_GET_CONFIG, &config) == 0) {
                 if (config.channel_count == 1) {
-                    *pChannels = AudioSystem::CHANNEL_IN_MONO;
+                    *pChannels = AUDIO_CHANNEL_IN_MONO;
                 } else {
-                    *pChannels = AudioSystem::CHANNEL_IN_STEREO;
+                    *pChannels = AUDIO_CHANNEL_IN_STEREO;
                 }
                 *pRate = config.sample_rate;
             }
@@ -5784,8 +5784,7 @@ status_t AudioHardware::AudioStreamInMSM8x60::set(
 
         ALOGV("set config");
         config.channel_count = AudioSystem::popCount((*pChannels) &
-                              (AudioSystem::CHANNEL_IN_STEREO|
-                               AudioSystem::CHANNEL_IN_MONO));
+                              (AUDIO_CHANNEL_IN_STEREO|AUDIO_CHANNEL_IN_MONO));
 
         config.sample_rate = *pRate;
 
@@ -5802,9 +5801,9 @@ status_t AudioHardware::AudioStreamInMSM8x60::set(
             ALOGE("Cannot set config");
             if (ioctl(mFdin, AUDIO_GET_CONFIG, &config) == 0) {
                 if (config.channel_count == 1) {
-                    *pChannels = AudioSystem::CHANNEL_IN_MONO;
+                    *pChannels = AUDIO_CHANNEL_IN_MONO;
                 } else {
-                    *pChannels = AudioSystem::CHANNEL_IN_STEREO;
+                    *pChannels = AUDIO_CHANNEL_IN_STEREO;
                 }
                 *pRate = config.sample_rate;
             }
@@ -5829,14 +5828,14 @@ status_t AudioHardware::AudioStreamInMSM8x60::set(
         mBufferSize = config.buffer_size;
 
         if (mDevices == AUDIO_DEVICE_IN_VOICE_CALL) {
-            if ((mChannels & AudioSystem::CHANNEL_IN_VOICE_DNLINK) &&
-                (mChannels & AudioSystem::CHANNEL_IN_VOICE_UPLINK)) {
+            if ((mChannels & AUDIO_CHANNEL_IN_VOICE_DNLINK) &&
+                (mChannels & AUDIO_CHANNEL_IN_VOICE_UPLINK)) {
                 ALOGV("Recording Source: Voice Call Both Uplink and Downlink");
                 voc_rec_cfg.rec_mode = VOC_REC_BOTH;
-            } else if (mChannels & AudioSystem::CHANNEL_IN_VOICE_DNLINK) {
+            } else if (mChannels & AUDIO_CHANNEL_IN_VOICE_DNLINK) {
                 ALOGV("Recording Source: Voice Call DownLink");
                 voc_rec_cfg.rec_mode = VOC_REC_DOWNLINK;
-            } else if (mChannels & AudioSystem::CHANNEL_IN_VOICE_UPLINK) {
+            } else if (mChannels & AUDIO_CHANNEL_IN_VOICE_UPLINK) {
                 ALOGV("Recording Source: Voice Call UpLink");
                 voc_rec_cfg.rec_mode = VOC_REC_UPLINK;
             }
@@ -5918,7 +5917,7 @@ AudioHardware::AudioStreamInMSM8x60::~AudioStreamInMSM8x60()
 ssize_t AudioHardware::AudioStreamInMSM8x60::read( void* buffer, ssize_t bytes)
 {
     unsigned short dec_id = INVALID_DEVICE;
-    ALOGV("AudioStreamInMSM8x60::read(%p, %zu)", buffer, bytes);
+    ALOGVV("AudioStreamInMSM8x60::read(%p, %zu)", buffer, bytes);
     if (!mHardware) return -1;
 
     size_t count = bytes;
@@ -5979,8 +5978,8 @@ ssize_t AudioHardware::AudioStreamInMSM8x60::read( void* buffer, ssize_t bytes)
                 return -1;
             }
             Mutex::Autolock lock(mDeviceSwitchLock);
-            if (!(mChannels & AudioSystem::CHANNEL_IN_VOICE_DNLINK ||
-                  mChannels & AudioSystem::CHANNEL_IN_VOICE_UPLINK)) {
+            if (!(mChannels & AUDIO_CHANNEL_IN_VOICE_DNLINK ||
+                  mChannels & AUDIO_CHANNEL_IN_VOICE_UPLINK)) {
                  ALOGV("dec_id = %d,cur_tx= %d",dec_id,cur_tx);
                  if(cur_tx == INVALID_DEVICE)
                      cur_tx = DEVICE_HANDSET_TX;
@@ -6003,8 +6002,8 @@ ssize_t AudioHardware::AudioStreamInMSM8x60::read( void* buffer, ssize_t bytes)
 
 
     if (mState < AUDIO_INPUT_STARTED) {
-        if (!(mChannels & AudioSystem::CHANNEL_IN_VOICE_DNLINK ||
-            mChannels & AudioSystem::CHANNEL_IN_VOICE_UPLINK)) {
+        if (!(mChannels & AUDIO_CHANNEL_IN_VOICE_DNLINK ||
+            mChannels & AUDIO_CHANNEL_IN_VOICE_UPLINK)) {
 #ifdef QCOM_FM_ENABLED
             // force routing to input device
             // for FM recording, no need to reconfigure afe loopback path
@@ -6121,8 +6120,8 @@ status_t AudioHardware::AudioStreamInMSM8x60::standby()
 
     if(isDriverClosed){
         ALOGV("Deroute pcm stream");
-        if (!(mChannels & AudioSystem::CHANNEL_IN_VOICE_DNLINK ||
-            mChannels & AudioSystem::CHANNEL_IN_VOICE_UPLINK)) {
+        if (!(mChannels & AUDIO_CHANNEL_IN_VOICE_DNLINK ||
+            mChannels & AUDIO_CHANNEL_IN_VOICE_UPLINK)) {
             if(msm_route_stream(PCM_REC, temp->dec_id,DEV_ID(temp->dev_id), 0)) {
                ALOGE("could not set stream routing\n");
                deleteFromTable(PCM_REC);
