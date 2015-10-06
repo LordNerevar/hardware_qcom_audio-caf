@@ -772,6 +772,22 @@ audio_io_handle_t AudioPolicyManager::getOutput(AudioSystem::stream_type stream,
         flags = (AudioSystem::output_flags)(flags | AUDIO_OUTPUT_FLAG_DIRECT);
     }
 
+#ifdef DEEP_BUFFER_RINGTONE
+    // don't use low latency for ringtones as it could cause i/o starvation
+    // in usecases like camera where a device may be in thermal mitigation
+    if (stream == AUDIO_STREAM_RING) {
+        flags = (AudioSystem::output_flags)(flags | AUDIO_OUTPUT_FLAG_DEEP_BUFFER);
+    }
+#endif
+
+#ifdef DEEP_BUFFER_NOTIFICATION
+    // don't use low latency for notifications as it could cause i/o starvation
+    // in usecases like camera where a device may be in thermal mitigation
+    if (stream == AUDIO_STREAM_NOTIFICATION) {
+        flags = (AudioSystem::output_flags)(flags | AUDIO_OUTPUT_FLAG_DEEP_BUFFER);
+    }
+#endif
+
     IOProfile *profile = getProfileForDirectOutput(device,
                                                    samplingRate,
                                                    format,

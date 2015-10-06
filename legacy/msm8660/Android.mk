@@ -39,6 +39,13 @@ ifeq ($(BOARD_HAVE_BACK_MIC_CAMCORDER),true)
   common_cflags += -DBACK_MIC_CAMCORDER
 endif
 
+ifeq ($(AUDIO_FEATURE_DEEP_BUFFER_RINGTONE),true)
+  common_cflags += -DDEEP_BUFFER_RINGTONE
+endif
+
+ifeq ($(AUDIO_FEATURE_DEEP_BUFFER_NOTIFICATION),true)
+  common_cflags += -DDEEP_BUFFER_NOTIFICATION
+endif
 
 include $(CLEAR_VARS)
 
